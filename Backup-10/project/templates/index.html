@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Work Session Monitor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            min-width: 140px;
+        }
+
+        button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s;
+        }
+
+        button:hover::before {
+            left: 100%;
+        }
+
+        #startBtn {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);
+        }
+
+        #startBtn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(76, 175, 80, 0.5);
+        }
+
+        #stopBtn {
+            background: linear-gradient(45deg, #f44336, #da190b);
+            color: white;
+            box-shadow: 0 5px 15px rgba(244, 67, 54, 0.4);
+        }
+
+        #stopBtn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(244, 67, 54, 0.5);
+        }
+
+        #checkBtn {
+            background: linear-gradient(45deg, #2196F3, #0b7dda);
+            color: white;
+            box-shadow: 0 5px 15px rgba(33, 150, 243, 0.4);
+        }
+
+        #checkBtn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(33, 150, 243, 0.5);
+        }
+
+        #historyBtn {
+            background: linear-gradient(45deg, #FF9800, #e68900);
+            color: white;
+            box-shadow: 0 5px 15px rgba(255, 152, 0, 0.4);
+        }
+
+        #historyBtn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 152, 0, 0.5);
+        }
+        
+        button:disabled {
+            background: linear-gradient(45deg, #ccc, #999);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        button:disabled::before {
+            display: none;
+        }
+
+        .status-card {
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 5px solid #667eea;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        #status {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            text-align: center;
+            min-height: 25px;
+        }
+
+        .distance-card {
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 5px solid #4CAF50;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        #distance {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            text-align: center;
+            min-height: 25px;
+        }
+
+        .audio-settings {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            padding: 25px;
+            margin: 20px 0;
+            border-left: 5px solid #9C27B0;
+            box-shadow: 0 8px 25px rgba(156, 39, 176, 0.15);
+            backdrop-filter: blur(5px);
+        }
+
+        .audio-settings h3 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 18px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .audio-control {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .audio-select-container {
+            position: relative;
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .audio-select {
+            width: 100%;
+            padding: 12px 40px 12px 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 12px;
+            background: white;
+            font-size: 14px;
+            font-weight: 500;
+            color: #333;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 12px center;
+            background-repeat: no-repeat;
+            background-size: 16px;
+        }
+
+        .audio-select:focus {
+            outline: none;
+            border-color: #9C27B0;
+            box-shadow: 0 0 0 3px rgba(156, 39, 176, 0.1);
+        }
+
+        .audio-select:hover {
+            border-color: #9C27B0;
+        }
+
+        .audio-control-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .audio-control button {
+            min-width: 90px;
+            padding: 12px 20px;
+            font-size: 14px;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        #testAudioBtn {
+            background: linear-gradient(45deg, #9C27B0, #7B1FA2);
+            color: white;
+            box-shadow: 0 4px 15px rgba(156, 39, 176, 0.3);
+        }
+
+        #testAudioBtn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(156, 39, 176, 0.4);
+        }
+
+        #stopTestBtn {
+            background: linear-gradient(45deg, #f44336, #da190b);
+            color: white;
+            box-shadow: 0 4px 15px rgba(244, 67, 54, 0.3);
+        }
+
+        #stopTestBtn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(244, 67, 54, 0.4);
+        }
+
+        .audio-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 15px;
+            background: linear-gradient(45deg, rgba(156, 39, 176, 0.1), rgba(123, 31, 162, 0.1));
+            border-radius: 10px;
+            font-size: 14px;
+            color: #333;
+            font-weight: 500;
+            margin-top: 15px;
+        }
+
+        .audio-status.success {
+            background: linear-gradient(45deg, rgba(76, 175, 80, 0.1), rgba(69, 160, 73, 0.1));
+            border-left: 4px solid #4CAF50;
+        }
+
+        .audio-status.error {
+            background: linear-gradient(45deg, rgba(244, 67, 54, 0.1), rgba(218, 25, 11, 0.1));
+            border-left: 4px solid #f44336;
+        }
+
+        .audio-visualizer {
+            display: none;
+            align-items: center;
+            gap: 3px;
+            margin-left: 10px;
+        }
+
+        .audio-visualizer.active {
+            display: flex;
+        }
+
+        .audio-bar {
+            width: 3px;
+            height: 20px;
+            background: #9C27B0;
+            border-radius: 2px;
+            animation: audio-wave 1s ease-in-out infinite;
+        }
+
+        .audio-bar:nth-child(2) { animation-delay: 0.1s; }
+        .audio-bar:nth-child(3) { animation-delay: 0.2s; }
+        .audio-bar:nth-child(4) { animation-delay: 0.3s; }
+        .audio-bar:nth-child(5) { animation-delay: 0.4s; }
+
+        @keyframes audio-wave {
+            0%, 100% { height: 5px; opacity: 0.3; }
+            50% { height: 20px; opacity: 1; }
+        }
+
+        /* Session Info Cards */
+        .session-info {
+            display: none;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .info-card {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid #667eea;
+        }
+
+        .info-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .info-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: #333;
+        }
+
+        /* Break Progress Bar */
+        .break-progress-container {
+            display: none;
+            margin: 20px 0;
+        }
+
+        .break-progress-label {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 8px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .break-progress {
+            width: 100%;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 5px;
+            overflow: hidden;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .break-progress-bar {
+            height: 100%;
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            transition: width 0.5s ease;
+            border-radius: 5px;
+        }
+
+        /* Break Reminder Notification */
+        .break-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(255, 107, 107, 0.4);
+            transform: translateX(400px);
+            transition: transform 0.4s ease;
+            z-index: 1000;
+            max-width: 350px;
+            animation: pulse-notification 2s infinite;
+            display: none;
+
+        }
+
+        .break-notification.show {
+            transform: translateX(0);
+        }
+
+        .break-notification h3 {
+            margin-bottom: 12px;
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .break-notification p {
+            margin-bottom: 18px;
+            opacity: 0.95;
+            line-height: 1.4;
+        }
+
+        .break-notification .notification-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .break-notification button {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 10px 16px;
+            font-size: 14px;
+            min-width: auto;
+            flex: 1;
+        }
+
+        .break-notification button:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        @keyframes pulse-notification {
+            0% { transform: translateX(0) scale(1); }
+            50% { transform: translateX(0) scale(1.02); }
+            100% { transform: translateX(0) scale(1); }
+        }
+
+        .warning {
+            color: #f44336;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .icon {
+            margin-right: 8px;
+            font-size: 18px;
+        }
+
+        /* Loading animation */
+        .loading {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Toast notifications */
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 15px 25px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            z-index: 1001;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .toast.show {
+            opacity: 1;
+        }
+
+        .toast.success {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+        }
+
+        .toast.error {
+            background: linear-gradient(45deg, #f44336, #da190b);
+        }
+
+        .toast.warning {
+            background: linear-gradient(45deg, #FF9800, #e68900);
+        }
+
+        .toast.info {
+            background: linear-gradient(45deg, #2196F3, #0b7dda);
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+                margin: 10px;
+            }
+            
+            .button-group {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            button {
+                width: 100%;
+                max-width: 280px;
+            }
+
+            .break-notification {
+                right: 10px;
+                left: 10px;
+                max-width: none;
+                transform: translateY(-100px);
+            }
+
+            .break-notification.show {
+                transform: translateY(0);
+            }
+        }
+    
+        #avgDistanceCard {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Work Session Monitor</h1>
+        
+        <div class="button-group">
+            <button id="startBtn">
+                <span class="icon">▶️</span>Start Work
+            </button>
+            <button id="stopBtn" disabled>
+                <span class="icon">⏹️</span>Stop Work
+            </button>
+            <button id="checkBtn">
+                <span class="icon">📏</span>Check Distance
+            </button>
+            <button id="historyBtn" onclick="window.location.href='/history'">
+                <span class="icon">📊</span>View History
+            </button>
+        </div>
+
+         <!-- Audio Settings -->
+        <div class="audio-settings">
+            <h3>
+                <span>🎵</span>
+                Break Alert Audio Settings
+            </h3>
+            <div class="audio-control">
+                <div class="audio-select-container">
+                    <select id="audioSelect" class="audio-select">
+                        <option value="">🔇 No Sound</option>
+                        <option value="audio/bac-phan.mp3">Silver Fate</option>
+                        <option value="audio/dom-dom.mp3">Firefly</option>
+                        <option value="audio/em-gi-oi.mp3">Hey! Girl</option>
+                        <option value="audio/hong-nhan.mp3">Beauty</option>
+                        <option value="audio/song-gio.mp3">Stormy</option>
+                        <option value="audio/thien-ly-oi.mp3">Tonkin Creeper</option>
+                        <option value="audio/la-mot-thang-con-trai.mp3">Is a boy</option>
+                        <option value="audio/nhac_chuong_doraemon.mp3">Doraemon</option>
+                        <option value="audio/trinh.mp3">Trinh</option>
+                    </select>
+                </div>
+                <div class="audio-control-buttons">
+                    <button id="testAudioBtn">
+                        <span>🎵</span> Test
+                    </button>
+                    <button id="stopTestBtn" disabled>
+                        <span>⏹️</span> Stop
+                    </button>
+                </div>
+            </div>
+            <div class="audio-status" id="audioStatus">
+                <span>🔇</span>
+                <span>No audio selected</span>
+                <div class="audio-visualizer" id="audioVisualizer">
+                    <div class="audio-bar"></div>
+                    <div class="audio-bar"></div>
+                    <div class="audio-bar"></div>
+                    <div class="audio-bar"></div>
+                    <div class="audio-bar"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="status-card">
+            <div id="status">Ready to start work session</div>
+        </div>
+
+        <div class="distance-card">
+            <div id="distance">Click "Check Distance" to measure</div>
+        </div>
+
+        <div id="sessionInfo" class="session-info">
+            <div class="info-card">
+                <div class="info-label">Work Duration</div>
+                <div class="info-value" id="workDuration">0 min</div>
+            </div>
+            <div class="info-card" id="avgDistanceCard">
+                <div class="info-label">Average Distance</div>
+                <div class="info-value" id="avgDistance">0 cm</div>
+            </div>
+            <div class="info-card">
+                <div class="info-label">Break Warnings</div>
+                <div class="info-value" id="breakWarnings">0</div>
+            </div>
+            <div class="info-card">
+                <div class="info-label">Next Break In</div>
+                <div class="info-value" id="nextBreak">5.0 min</div>
+            </div>
+        </div>
+
+        <div id="breakProgressContainer" class="break-progress-container">
+            <div class="break-progress-label">Progress to Next Break</div>
+            <div class="break-progress">
+                <div class="break-progress-bar" id="breakProgressBar" style="width: 0%"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="breakNotification" class="break-notification">
+        <h3>⏰ Time for a Break!</h3>
+        <p>You've been working for <span id="workTime">0</span> minutes. Take a short break to protect your eyes and health!</p>
+        <div class="notification-buttons">
+            <button onclick="dismissBreakWarning()">✅ Taken</button>
+            <button onclick="snoozeBreakWarning()">⏰ Snooze 2min</button>
+        </div>
+    </div>
+
+    <!-- Hidden audio element for break alerts -->
+    <audio id="breakAudio" preload="auto" style="display: none;"></audio>
+
+    <script>
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const checkBtn = document.getElementById('checkBtn');
+        const statusDiv = document.getElementById('status');
+        const distanceDiv = document.getElementById('distance');
+        const breakNotification = document.getElementById('breakNotification');
+        const workTimeSpan = document.getElementById('workTime');
+        const audioFile = document.getElementById('audioFile');
+        const testAudioBtn = document.getElementById('testAudioBtn');
+        const stopTestBtn = document.getElementById('stopTestBtn');
+        const audioStatus = document.getElementById('audioStatus');
+        const breakAudio = document.getElementById('breakAudio');
+
+        const breakReminderMinutes = 5;
+
+        let sessionActive = false;
+        let updateInterval = null;
+        let breakCheckInterval = null;
+        let snoozeUntil = null;
+        let isBreakAudioPlaying = false;
+        let audioLoopInterval = null;
+
+        window.onload = function() {
+            checkCurrentSession();
+            setupAudioControls();
+        };
+
+        function setupAudioControls() {
+            const audioSelect = document.getElementById('audioSelect');
+            const audioVisualizer = document.getElementById('audioVisualizer');
+            
+            // Audio selection change
+            audioSelect.addEventListener('change', function(e) {
+                const selectedValue = e.target.value;
+                if (selectedValue) {
+                    breakAudio.src = selectedValue;
+                    const selectedText = e.target.options[e.target.selectedIndex].text;
+                    updateAudioStatus('success', `${selectedText} loaded`, '🎵');
+                    showToast(`🎵 Audio loaded: ${selectedText}`, 'success');
+                } else {
+                    breakAudio.src = '';
+                    updateAudioStatus('', 'No audio selected', '🔇');
+                }
+            });
+
+            // Test audio button
+            testAudioBtn.addEventListener('click', function() {
+                if (breakAudio.src) {
+                    playBreakAudio();
+                    testAudioBtn.disabled = true;
+                    stopTestBtn.disabled = false;
+                    audioVisualizer.classList.add('active');
+                    updateAudioStatus('success', 'Playing test audio...', '🔊');
+                } else {
+                    showToast('❌ Please select an audio file first', 'error');
+                    updateAudioStatus('error', 'No audio selected', '❌');
+                }
+            });
+
+            // Stop test audio button
+            stopTestBtn.addEventListener('click', function() {
+                stopBreakAudio();
+                testAudioBtn.disabled = false;
+                stopTestBtn.disabled = true;
+                audioVisualizer.classList.remove('active');
+                const selectedOption = audioSelect.options[audioSelect.selectedIndex];
+                if (selectedOption.value) {
+                    updateAudioStatus('success', `${selectedOption.text} ready`, '🎵');
+                } else {
+                    updateAudioStatus('', 'No audio selected', '🔇');
+                }
+            });
+
+            // Audio error handling
+            breakAudio.addEventListener('error', function() {
+                updateAudioStatus('error', 'Failed to load audio file', '❌');
+                showToast('❌ Failed to load audio file', 'error');
+                isBreakAudioPlaying = false;
+                audioVisualizer.classList.remove('active');
+                testAudioBtn.disabled = false;
+                stopTestBtn.disabled = true;
+            });
+
+            // Audio can play
+            breakAudio.addEventListener('canplaythrough', function() {
+                if (breakAudio.src && !isBreakAudioPlaying) {
+                    const selectedOption = audioSelect.options[audioSelect.selectedIndex];
+                    updateAudioStatus('success', `${selectedOption.text} ready`, '🎵');
+                }
+            });
+        }
+
+        function updateAudioStatus(type, message, icon) {
+            audioStatus.className = `audio-status ${type}`;
+            audioStatus.innerHTML = `
+                <span>${icon}</span>
+                <span>${message}</span>
+                <div class="audio-visualizer" id="audioVisualizer">
+                    <div class="audio-bar"></div>
+                    <div class="audio-bar"></div>
+                    <div class="audio-bar"></div>
+                    <div class="audio-bar"></div>
+                    <div class="audio-bar"></div>
+                </div>
+            `;
+        }
+
+        function playBreakAudio() {
+            if (breakAudio.src && !isBreakAudioPlaying) {
+                isBreakAudioPlaying = true;
+                
+                // Function to play audio on loop
+                const playLoop = () => {
+                    breakAudio.currentTime = 0;
+                    breakAudio.play().catch(error => {
+                        console.error('Error playing audio:', error);
+                        showToast('❌ Could not play audio', 'error');
+                        isBreakAudioPlaying = false;
+                    });
+                };
+
+                // Play immediately
+                playLoop();
+
+                // Set up loop - play again when audio ends
+                breakAudio.addEventListener('ended', playLoop);
+                
+                // Also set up a backup interval (in case 'ended' event doesn't fire reliably)
+                audioLoopInterval = setInterval(() => {
+                    if (isBreakAudioPlaying && breakAudio.src) {
+                        if (breakAudio.ended || breakAudio.currentTime === 0) {
+                            playLoop();
+                        }
+                    }
+                }, 1000);
+            }
+        }
+
+        function stopBreakAudio() {
+            if (isBreakAudioPlaying) {
+                isBreakAudioPlaying = false;
+                breakAudio.pause();
+                breakAudio.currentTime = 0;
+                
+                // Clear the interval
+                if (audioLoopInterval) {
+                    clearInterval(audioLoopInterval);
+                    audioLoopInterval = null;
+                }
+                
+                // Remove event listener to prevent memory leaks
+                breakAudio.removeEventListener('ended', () => {});
+            }
+        }
+
+        function checkCurrentSession() {
+            fetch('/api/current_session')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.active) {
+                        // ... (Mã xử lý khi có phiên hoạt động - GIỮ NGUYÊN)
+                        sessionActive = true;
+                        startBtn.disabled = true;
+                        stopBtn.disabled = false;
+                        document.getElementById('sessionInfo').style.display = 'grid';
+                        document.getElementById('breakProgressContainer').style.display = 'block';
+                        updateSessionUI(data);
+                        startPeriodicUpdates();
+                        statusDiv.innerHTML = `<span class="icon">✅</span>Work started at ${data.start_time}`;
+                    } else {
+                        // Khi KHÔNG CÓ phiên làm việc nào đang hoạt động
+                        sessionActive = false;
+                        startBtn.disabled = false;
+                        stopBtn.disabled = true;
+                        document.getElementById('sessionInfo').style.display = 'none';
+                        document.getElementById('breakProgressContainer').style.display = 'none';
+                        statusDiv.innerHTML = `Ready to start work session`;
+                        updateDistanceUI({ distance: 0, warning: false });
+                        // THÊM DÒNG NÀY VÀO ĐÂY:
+                        hideBreakNotification(); // Đảm bảo thông báo bị ẩn khi không có phiên hoạt động
+                    }
+                })
+                .catch(error => console.error('Error checking current session:', error));
+        }
+
+        startBtn.onclick = function() {
+            startBtn.innerHTML = '<div class="loading"></div>Starting...';
+            startBtn.disabled = true;
+
+            fetch('/start_work', {method: 'POST'})
+                .then(res => res.json())
+                .then(data => {
+                    if(data.success) {
+                        sessionActive = true;
+                        statusDiv.innerHTML = `<span class="icon">✅</span>Work started at ${data.start_time}`;
+                        startBtn.disabled = true;
+                        stopBtn.disabled = false;
+                        document.getElementById('sessionInfo').style.display = 'grid';
+                        document.getElementById('breakProgressContainer').style.display = 'block';
+                        updateSessionUI({
+                            work_duration: 0,
+                            avg_distance: 0,
+                            break_warnings: 0,
+                            next_break_in: data.break_reminder_minutes
+                        });
+                        startPeriodicUpdates();
+                        showToast('✅ Work session started successfully!', 'success');
+                    } else {
+                        statusDiv.innerHTML = `<span class="icon">❌</span>${data.error}`;
+                        showToast('❌ Error: ' + data.error, 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showToast('❌ Cannot connect to server', 'error');
+                })
+                .finally(() => {
+                    startBtn.innerHTML = '<span class="icon">▶️</span>Start Work';
+                });
+        };
+
+        stopBtn.onclick = function() {
+            stopBtn.innerHTML = '<div class="loading"></div>Stopping...';
+            stopBtn.disabled = true;
+
+            fetch('/stop_work', {method: 'POST'})
+                .then(res => res.json())
+                .then(data => {
+                    if(data.success) {
+                        sessionActive = false;
+                        statusDiv.innerHTML = `<span class="icon">⏹️</span>Work stopped. Duration: ${data.duration}, Avg Distance: ${data.avg_distance}`;
+                        startBtn.disabled = false;
+                        stopBtn.disabled = true;
+                        document.getElementById('sessionInfo').style.display = 'none';
+                        document.getElementById('breakProgressContainer').style.display = 'none';
+                        stopPeriodicUpdates();
+                        hideBreakNotification();
+                        showToast(`✅ Session ended! Duration: ${data.duration}`, 'success');
+                    } else {
+                        statusDiv.innerHTML = `<span class="icon">❌</span>${data.error}`;
+                        showToast('❌ Error: ' + data.error, 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showToast('❌ Cannot connect to server', 'error');
+                })
+                .finally(() => {
+                    stopBtn.innerHTML = '<span class="icon">⏹️</span>Stop Work';
+                });
+        };
+
+        checkBtn.onclick = function() {
+            fetch('/check_distance')
+                .then(res => res.json())
+                .then(data => {
+                    updateDistanceUI(data);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showToast('❌ Cannot check distance', 'error');
+                });
+        };
+
+        function updateDistanceUI(data) {
+            if(data && data.distance > 0) {
+                const warningClass = data.warning ? ' warning' : '';
+                const warningIcon = data.warning ? '⚠️' : '✅';
+                distanceDiv.innerHTML = `<span class="icon">${warningIcon}</span><span class="${warningClass}">Current Distance: ${data.distance.toFixed(1)}cm${data.warning ? ' (Too Close!)' : ''}</span>`;
+            } else {
+                distanceDiv.innerHTML = '<span class="icon">❌</span>No distance data.';
+            }
+        }
+
+        function startPeriodicUpdates() {
+            stopPeriodicUpdates(); // Clear any existing intervals
+            
+            // Interval for updating UI and checking break reminder
+            updateInterval = setInterval(() => {
+                if (sessionActive) {
+                    updateCurrentSession();
+                }
+            }, 3000); 
+            
+            // Interval for checking break reminder independently
+            breakCheckInterval = setInterval(() => {
+                if (sessionActive) {
+                    checkBreakReminder();
+                }
+            }, 5000);
+        }
+        
+        function stopPeriodicUpdates() {
+             if (updateInterval) {
+                clearInterval(updateInterval);
+                updateInterval = null;
+            }
+            if (breakCheckInterval) {
+                clearInterval(breakCheckInterval);
+                breakCheckInterval = null;
+            }
+        }
+
+        function updateCurrentSession() {
+            fetch('/api/current_session')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.active) {
+                        updateSessionUI(data);
+                    }
+                })
+                .catch(error => console.error('Error updating session:', error));
+        }
+
+        function updateSessionUI(data) {
+            document.getElementById('workDuration').textContent = `${data.work_duration.toFixed(1)} min`;
+            document.getElementById('avgDistance').textContent = `${data.avg_distance.toFixed(1)} cm`;
+            document.getElementById('breakWarnings').textContent = data.break_warnings;
+            document.getElementById('nextBreak').textContent = `${data.next_break_in.toFixed(1)} min`;
+            
+            const progress = Math.min(100, (data.work_duration / breakReminderMinutes) * 100);
+            document.getElementById('breakProgressBar').style.width = progress + '%';
+        }
+
+        function checkBreakReminder() {
+            fetch('/api/check_break_reminder')
+                .then(response => response.json())
+                .then(data => {
+                    const now = Date.now();
+                    if (data.active && data.should_break) {
+                        if (!snoozeUntil || now >= snoozeUntil) {
+                            workTimeSpan.textContent = Math.floor(data.work_duration);
+                            showBreakNotification();
+                        } else {
+                            hideBreakNotification();
+                        }
+                    } else {
+                        hideBreakNotification();
+                    }
+                })
+            .catch(error => console.error('Error checking break reminder:', error));
+        }
+
+
+        function showBreakNotification() {
+            breakNotification.style.display = 'block';
+            if (!breakNotification.classList.contains('show')) {
+                breakNotification.style.display = 'block';
+                breakNotification.classList.add('show');
+                
+                // Start playing break audio continuously and show visualizer
+                playBreakAudio();
+                document.getElementById('audioVisualizer').classList.add('active');
+                updateAudioStatus('success', 'Break alert playing...', '🔊');
+            }
+        }
+
+        function hideBreakNotification() {
+            if (breakNotification.classList.contains('show')) {
+                breakNotification.classList.remove('show');
+            }
+            breakNotification.style.display = 'none';
+            
+            // Stop playing break audio
+            stopBreakAudio();
+            
+            // Reset test buttons and visualizer
+            testAudioBtn.disabled = false;
+            stopTestBtn.disabled = true;
+            document.getElementById('audioVisualizer').classList.remove('active');
+            
+            // Update status
+            const audioSelect = document.getElementById('audioSelect');
+            const selectedOption = audioSelect.options[audioSelect.selectedIndex];
+            if (selectedOption.value) {
+                updateAudioStatus('success', `${selectedOption.text} ready`, '🎵');
+            } else {
+                updateAudioStatus('', 'No audio selected', '🔇');
+            }
+        }
+        
+        function dismissBreakWarning() {
+            fetch('/dismiss_break_warning', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    hideBreakNotification();
+                    showToast('✅ Break acknowledged. Time reset!', 'success');
+                    // Cập nhật lại UI ngay lập tức bằng cách fetch dữ liệu mới
+                    checkCurrentSession();
+                }
+            })
+            .catch(error => console.error('Error dismissing break warning:', error));
+        }
+
+        function snoozeBreakWarning() {
+            snoozeUntil = Date.now() + (2 * 60 * 1000);
+            hideBreakNotification();
+            showToast('⏰ Will remind again in 2 minutes', 'info');
+        }
+
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            setTimeout(() => toast.classList.add('show'), 100);
+
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        window.addEventListener('beforeunload', function() {
+            stopPeriodicUpdates();
+        });
+    </script>
+</body>
+</html>
