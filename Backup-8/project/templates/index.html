@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Work Session Monitor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            min-width: 140px;
+        }
+
+        button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s;
+        }
+
+        button:hover::before {
+            left: 100%;
+        }
+
+        #startBtn {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);
+        }
+
+        #startBtn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(76, 175, 80, 0.5);
+        }
+
+        #stopBtn {
+            background: linear-gradient(45deg, #f44336, #da190b);
+            color: white;
+            box-shadow: 0 5px 15px rgba(244, 67, 54, 0.4);
+        }
+
+        #stopBtn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(244, 67, 54, 0.5);
+        }
+
+        #checkBtn {
+            background: linear-gradient(45deg, #2196F3, #0b7dda);
+            color: white;
+            box-shadow: 0 5px 15px rgba(33, 150, 243, 0.4);
+        }
+
+        #checkBtn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(33, 150, 243, 0.5);
+        }
+
+        #historyBtn {
+            background: linear-gradient(45deg, #FF9800, #e68900);
+            color: white;
+            box-shadow: 0 5px 15px rgba(255, 152, 0, 0.4);
+        }
+
+        #historyBtn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 152, 0, 0.5);
+        }
+        
+        button:disabled {
+            background: linear-gradient(45deg, #ccc, #999);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        button:disabled::before {
+            display: none;
+        }
+
+        .status-card {
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 5px solid #667eea;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        #status {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            text-align: center;
+            min-height: 25px;
+        }
+
+        .distance-card {
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 5px solid #4CAF50;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        #distance {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            text-align: center;
+            min-height: 25px;
+        }
+
+        /* Session Info Cards */
+        .session-info {
+            display: none;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .info-card {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid #667eea;
+        }
+
+        .info-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .info-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: #333;
+        }
+
+        /* Break Progress Bar */
+        .break-progress-container {
+            display: none;
+            margin: 20px 0;
+        }
+
+        .break-progress-label {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 8px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .break-progress {
+            width: 100%;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 5px;
+            overflow: hidden;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .break-progress-bar {
+            height: 100%;
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            transition: width 0.5s ease;
+            border-radius: 5px;
+        }
+
+        /* Break Reminder Notification */
+        .break-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(255, 107, 107, 0.4);
+            transform: translateX(400px);
+            transition: transform 0.4s ease;
+            z-index: 1000;
+            max-width: 350px;
+            animation: pulse-notification 2s infinite;
+            display: none;
+
+        }
+
+        .break-notification.show {
+            transform: translateX(0);
+        }
+
+        .break-notification h3 {
+            margin-bottom: 12px;
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .break-notification p {
+            margin-bottom: 18px;
+            opacity: 0.95;
+            line-height: 1.4;
+        }
+
+        .break-notification .notification-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .break-notification button {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 10px 16px;
+            font-size: 14px;
+            min-width: auto;
+            flex: 1;
+        }
+
+        .break-notification button:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        @keyframes pulse-notification {
+            0% { transform: translateX(0) scale(1); }
+            50% { transform: translateX(0) scale(1.02); }
+            100% { transform: translateX(0) scale(1); }
+        }
+
+        .warning {
+            color: #f44336;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .icon {
+            margin-right: 8px;
+            font-size: 18px;
+        }
+
+        /* Loading animation */
+        .loading {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Toast notifications */
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 15px 25px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            z-index: 1001;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .toast.show {
+            opacity: 1;
+        }
+
+        .toast.success {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+        }
+
+        .toast.error {
+            background: linear-gradient(45deg, #f44336, #da190b);
+        }
+
+        .toast.warning {
+            background: linear-gradient(45deg, #FF9800, #e68900);
+        }
+
+        .toast.info {
+            background: linear-gradient(45deg, #2196F3, #0b7dda);
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+                margin: 10px;
+            }
+            
+            .button-group {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            button {
+                width: 100%;
+                max-width: 280px;
+            }
+
+            .break-notification {
+                right: 10px;
+                left: 10px;
+                max-width: none;
+                transform: translateY(-100px);
+            }
+
+            .break-notification.show {
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Work Session Monitor</h1>
+        
+        <div class="button-group">
+            <button id="startBtn">
+                <span class="icon">▶️</span>Start Work
+            </button>
+            <button id="stopBtn" disabled>
+                <span class="icon">⏹️</span>Stop Work
+            </button>
+            <button id="checkBtn">
+                <span class="icon">📏</span>Check Distance
+            </button>
+            <button id="historyBtn" onclick="window.location.href='/history'">
+                <span class="icon">📊</span>View History
+            </button>
+        </div>
+
+        <div class="status-card">
+            <div id="status">Ready to start work session</div>
+        </div>
+
+        <div class="distance-card">
+            <div id="distance">Click "Check Distance" to measure</div>
+        </div>
+
+        <div id="sessionInfo" class="session-info">
+            <div class="info-card">
+                <div class="info-label">Work Duration</div>
+                <div class="info-value" id="workDuration">0 min</div>
+            </div>
+            <div class="info-card">
+                <div class="info-label">Average Distance</div>
+                <div class="info-value" id="avgDistance">0 cm</div>
+            </div>
+            <div class="info-card">
+                <div class="info-label">Break Warnings</div>
+                <div class="info-value" id="breakWarnings">0</div>
+            </div>
+            <div class="info-card">
+                <div class="info-label">Next Break In</div>
+                <div class="info-value" id="nextBreak">5.0 min</div>
+            </div>
+        </div>
+
+        <div id="breakProgressContainer" class="break-progress-container">
+            <div class="break-progress-label">Progress to Next Break</div>
+            <div class="break-progress">
+                <div class="break-progress-bar" id="breakProgressBar" style="width: 0%"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="breakNotification" class="break-notification">
+        <h3>⏰ Time for a Break!</h3>
+        <p>You've been working for <span id="workTime">0</span> minutes. Take a short break to protect your eyes and health!</p>
+        <div class="notification-buttons">
+            <button onclick="dismissBreakWarning()">✅ Taken</button>
+            <button onclick="snoozeBreakWarning()">⏰ Snooze 2min</button>
+        </div>
+    </div>
+
+    <script>
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const checkBtn = document.getElementById('checkBtn');
+        const statusDiv = document.getElementById('status');
+        const distanceDiv = document.getElementById('distance');
+        const breakNotification = document.getElementById('breakNotification');
+        const workTimeSpan = document.getElementById('workTime');
+
+        const breakReminderMinutes = 5;
+
+        let sessionActive = false;
+        let updateInterval = null;
+        let breakCheckInterval = null;
+        let snoozeUntil = null;
+
+        window.onload = function() {
+            checkCurrentSession();
+        };
+
+        function checkCurrentSession() {
+            fetch('/api/current_session')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.active) {
+                        // ... (Mã xử lý khi có phiên hoạt động - GIỮ NGUYÊN)
+                        sessionActive = true;
+                        startBtn.disabled = true;
+                        stopBtn.disabled = false;
+                        document.getElementById('sessionInfo').style.display = 'grid';
+                        document.getElementById('breakProgressContainer').style.display = 'block';
+                        updateSessionUI(data);
+                        startPeriodicUpdates();
+                        statusDiv.innerHTML = `<span class="icon">✅</span>Work started at ${data.start_time}`;
+                    } else {
+                        // Khi KHÔNG CÓ phiên làm việc nào đang hoạt động
+                        sessionActive = false;
+                        startBtn.disabled = false;
+                        stopBtn.disabled = true;
+                        document.getElementById('sessionInfo').style.display = 'none';
+                        document.getElementById('breakProgressContainer').style.display = 'none';
+                        statusDiv.innerHTML = `Ready to start work session`;
+                        updateDistanceUI({ distance: 0, warning: false });
+                        // THÊM DÒNG NÀY VÀO ĐÂY:
+                        hideBreakNotification(); // Đảm bảo thông báo bị ẩn khi không có phiên hoạt động
+                    }
+                })
+                .catch(error => console.error('Error checking current session:', error));
+        }
+
+        startBtn.onclick = function() {
+            startBtn.innerHTML = '<div class="loading"></div>Starting...';
+            startBtn.disabled = true;
+
+            fetch('/start_work', {method: 'POST'})
+                .then(res => res.json())
+                .then(data => {
+                    if(data.success) {
+                        sessionActive = true;
+                        statusDiv.innerHTML = `<span class="icon">✅</span>Work started at ${data.start_time}`;
+                        startBtn.disabled = true;
+                        stopBtn.disabled = false;
+                        document.getElementById('sessionInfo').style.display = 'grid';
+                        document.getElementById('breakProgressContainer').style.display = 'block';
+                        updateSessionUI({
+                            work_duration: 0,
+                            avg_distance: 0,
+                            break_warnings: 0,
+                            next_break_in: data.break_reminder_minutes
+                        });
+                        startPeriodicUpdates();
+                        showToast('✅ Work session started successfully!', 'success');
+                    } else {
+                        statusDiv.innerHTML = `<span class="icon">❌</span>${data.error}`;
+                        showToast('❌ Error: ' + data.error, 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showToast('❌ Cannot connect to server', 'error');
+                })
+                .finally(() => {
+                    startBtn.innerHTML = '<span class="icon">▶️</span>Start Work';
+                });
+        };
+
+        stopBtn.onclick = function() {
+            stopBtn.innerHTML = '<div class="loading"></div>Stopping...';
+            stopBtn.disabled = true;
+
+            fetch('/stop_work', {method: 'POST'})
+                .then(res => res.json())
+                .then(data => {
+                    if(data.success) {
+                        sessionActive = false;
+                        statusDiv.innerHTML = `<span class="icon">⏹️</span>Work stopped. Duration: ${data.duration}, Avg Distance: ${data.avg_distance}`;
+                        startBtn.disabled = false;
+                        stopBtn.disabled = true;
+                        document.getElementById('sessionInfo').style.display = 'none';
+                        document.getElementById('breakProgressContainer').style.display = 'none';
+                        stopPeriodicUpdates();
+                        hideBreakNotification();
+                        showToast(`✅ Session ended! Duration: ${data.duration}`, 'success');
+                    } else {
+                        statusDiv.innerHTML = `<span class="icon">❌</span>${data.error}`;
+                        showToast('❌ Error: ' + data.error, 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showToast('❌ Cannot connect to server', 'error');
+                })
+                .finally(() => {
+                    stopBtn.innerHTML = '<span class="icon">⏹️</span>Stop Work';
+                });
+        };
+
+        checkBtn.onclick = function() {
+            fetch('/check_distance')
+                .then(res => res.json())
+                .then(data => {
+                    updateDistanceUI(data);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showToast('❌ Cannot check distance', 'error');
+                });
+        };
+
+        function updateDistanceUI(data) {
+            if(data && data.distance > 0) {
+                const warningClass = data.warning ? ' warning' : '';
+                const warningIcon = data.warning ? '⚠️' : '✅';
+                distanceDiv.innerHTML = `<span class="icon">${warningIcon}</span><span class="${warningClass}">Current Distance: ${data.distance.toFixed(1)}cm${data.warning ? ' (Too Close!)' : ''}</span>`;
+            } else {
+                distanceDiv.innerHTML = '<span class="icon">❌</span>No distance data.';
+            }
+        }
+
+        function startPeriodicUpdates() {
+            stopPeriodicUpdates(); // Clear any existing intervals
+            
+            // Interval for updating UI and checking break reminder
+            updateInterval = setInterval(() => {
+                if (sessionActive) {
+                    updateCurrentSession();
+                }
+            }, 3000); 
+            
+            // Interval for checking break reminder independently
+            breakCheckInterval = setInterval(() => {
+                if (sessionActive) {
+                    checkBreakReminder();
+                }
+            }, 5000);
+        }
+        
+        function stopPeriodicUpdates() {
+             if (updateInterval) {
+                clearInterval(updateInterval);
+                updateInterval = null;
+            }
+            if (breakCheckInterval) {
+                clearInterval(breakCheckInterval);
+                breakCheckInterval = null;
+            }
+        }
+
+        function updateCurrentSession() {
+            fetch('/api/current_session')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.active) {
+                        updateSessionUI(data);
+                    }
+                })
+                .catch(error => console.error('Error updating session:', error));
+        }
+
+        function updateSessionUI(data) {
+            document.getElementById('workDuration').textContent = `${data.work_duration.toFixed(1)} min`;
+            document.getElementById('avgDistance').textContent = `${data.avg_distance.toFixed(1)} cm`;
+            document.getElementById('breakWarnings').textContent = data.break_warnings;
+            document.getElementById('nextBreak').textContent = `${data.next_break_in.toFixed(1)} min`;
+            
+            const progress = Math.min(100, (data.work_duration / breakReminderMinutes) * 100);
+            document.getElementById('breakProgressBar').style.width = progress + '%';
+        }
+
+        function checkBreakReminder() {
+            fetch('/api/check_break_reminder')
+                .then(response => response.json())
+                .then(data => {
+                    const now = Date.now();
+                    if (data.active && data.should_break) {
+                        if (!snoozeUntil || now >= snoozeUntil) {
+                            workTimeSpan.textContent = Math.floor(data.work_duration);
+                            showBreakNotification();
+                        } else {
+                            hideBreakNotification();
+                        }
+                    } else {
+                        hideBreakNotification();
+                    }
+                })
+            .catch(error => console.error('Error checking break reminder:', error));
+        }
+
+
+        function showBreakNotification() {
+            breakNotification.style.display = 'block';
+            if (!breakNotification.classList.contains('show')) {
+                breakNotification.style.display = 'block';
+                breakNotification.classList.add('show');
+                try {
+                    const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+D1uzEgBV+t2vXmZiUAN3vL7+B9MwQ');
+                    audio.play().catch(() => {});
+                } catch (e) {}
+            }
+        }
+
+        function hideBreakNotification() {
+            if (breakNotification.classList.contains('show')) {
+                breakNotification.classList.remove('show');
+            }
+            breakNotification.style.display = 'none';
+        }
+
+        function dismissBreakWarning() {
+            fetch('/dismiss_break_warning', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    hideBreakNotification();
+                    showToast('✅ Break acknowledged. Time reset!', 'success');
+                    // Cập nhật lại UI ngay lập tức bằng cách fetch dữ liệu mới
+                    checkCurrentSession();
+                }
+            })
+            .catch(error => console.error('Error dismissing break warning:', error));
+        }
+
+        function snoozeBreakWarning() {
+            snoozeUntil = Date.now() + (2 * 60 * 1000);
+            hideBreakNotification();
+            showToast('⏰ Will remind again in 2 minutes', 'info');
+        }
+
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            setTimeout(() => toast.classList.add('show'), 100);
+
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        window.addEventListener('beforeunload', function() {
+            stopPeriodicUpdates();
+        });
+    </script>
+</body>
+</html>
