@@ -10,6 +10,30 @@ hx.zero()
 led_alert = LED(17)
 buzzer_alert = Buzzer(27)
 
+# Hiệu chỉnh trọng lượng 
+def calibrate_hx711():
+    print("Bắt đầu hiệu chỉnh cảm biến HX711.")
+    input("Đảm bảo cảm biến không có trọng lượng nào và nhấn Enter để zero...")
+    hx.zero()
+    print("Đã zero cảm biến.")
+    time.sleep(1)
+
+    known_weight_gram = float(input("Đặt một vật có trọng lượng đã biết (bằng gram) lên cảm biến và nhập giá trị: "))
+    input("Nhấn Enter khi đã đặt vật lên cảm biến...")
+
+    current_weight = hx.get_weight_mean(20)
+    ratio = current_weight / known_weight_gram
+    hx.set_scale_ratio(ratio)
+
+    print(f"Giá trị đo được: {current_weight} (trọng lượng thực: {known_weight_gram}g)")
+    print(f"Tỷ lệ hiệu chỉnh đã được đặt: {ratio}")
+    print(f"Kiểm tra: {hx.get_weight_mean(20):.2f}g")
+    
+    return hx.get_scale_ratio()
+
+# Thực hiện hiệu chỉnh và lấy tỷ lệ
+scale_ratio = calibrate_hx711()
+
 # Thời gian tối đa ngồi cho phép theo mức (tính bằng giây)
 MAX_SITTING_TIME = 3600  
 MAX_SITTING_TIME_2 = 4200
@@ -54,7 +78,7 @@ while True:
                  led_alert.off()
                  buzzer_alert.off() 
 
-        time.sleep(3)
+        time.sleep(0.5)
          
     except KeyboardInterrupt:
         print("Dừng chương trình.")
